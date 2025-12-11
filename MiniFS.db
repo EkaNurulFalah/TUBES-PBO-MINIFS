@@ -29,3 +29,46 @@ CREATE TABLE commands_log (
     user_id INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+
+INSERT INTO users (username, password, role)
+VALUES ('admin', 'admin123', 'admin');
+
+INSERT INTO nodes (name, type, content, owner, parent)
+VALUES ('/', 'directory', NULL, 1, NULL); -- id = 1
+
+INSERT INTO nodes (name, type, content, owner, parent)
+VALUES ('system', 'directory', NULL, 1, 1); -- id = 2
+
+INSERT INTO nodes (name, type, content, owner, parent)
+VALUES ('manual.txt', 'file',
+'MiniFS User Manual
+------------------
+Available Commands:
+  ls       - list directory
+  cd       - change directory
+  mkdir    - create a directory
+  rmdir    - remove an empty directory
+  touch    - create a new text file
+  rm       - delete a file
+  cat      - display a file
+  echo     - write text into a file
+', 1, 2);
+
+INSERT INTO nodes (name, type, content, owner, parent)
+VALUES ('workspace', 'directory', NULL, 1, 1); -- id = 4
+
+INSERT INTO nodes (name, type, content, owner, parent)
+VALUES ('personal', 'directory', NULL, 1, 4);
+
+INSERT INTO nodes (name, type, content, owner, parent)
+VALUES ('work', 'directory', NULL, 1, 4);
+
+INSERT INTO nodes (name, type, content, owner, parent)
+VALUES ('notes', 'directory', NULL, 1, 4);
+
+INSERT INTO nodes (name, type, content, owner, parent)
+VALUES ('logs', 'directory', NULL, 1, 1); -- id = 8
+
+INSERT INTO nodes (name, type, content, owner, parent)
+VALUES ('logs.txt', 'file', '', 1, 8);
