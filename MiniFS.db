@@ -1,0 +1,31 @@
+create database minifs;
+
+use minifs;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('admin','user') NOT NULL
+);
+
+CREATE TABLE nodes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    type ENUM('file','directory') NOT NULL,
+    content TEXT NULL,
+
+    owner INT NOT NULL,
+    parent INT NULL,
+
+    FOREIGN KEY (owner) REFERENCES users(id),
+    FOREIGN KEY (parent) REFERENCES nodes(id) ON DELETE CASCADE
+);
+
+CREATE TABLE commands_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    command TEXT NOT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    user_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
