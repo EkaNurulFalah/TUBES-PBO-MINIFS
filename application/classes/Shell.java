@@ -11,20 +11,24 @@ public class Shell {
         "██║╚██╔╝██║██║██║╚██╗██║██║██╔══╝  ╚════██║\n" +
         "██║ ╚═╝ ██║██║██║ ╚████║██║██║     ███████║\n" +
         "╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝╚═╝     ╚══════╝\n" +
-        "● login\n" +
-        "● exit";
-    static Scanner input = new Scanner(System.in);
-    private User current;
-    private Directory currentDirectory;
+        "• login\n" +
+        "• exit";
+    private static final String PROMPT = "✦";
+    private static final String LOGGED_IN_MESSAGE =
+        "Welcome to MiniFS. Type 'help' to get started.";
 
-    public Shell(User current, Directory currentDirectory) {
-        this.current = current;
-        this.currentDirectory = currentDirectory;
+    static Scanner input = new Scanner(System.in);
+    private User user;
+    private Directory directory;
+
+    public Shell(User user, Directory directory) {
+        this.user = user;
+        this.directory = directory;
     }
 
     public Shell() {
-        this.current = null;
-        this.currentDirectory = null;
+        this.user = new User("1337", "noah", "123", "user");
+        this.directory = null;
     }
 
     private static void clearTerminal() {
@@ -42,7 +46,7 @@ public class Shell {
     private boolean authenticate() {
         loginMenu();
         while (true) {
-            System.out.print("✦ ");
+            System.out.print(PROMPT + " ");
             String command = input.nextLine().trim();
 
             if (command.equals("login")) {
@@ -80,7 +84,35 @@ public class Shell {
     }
 
     private void runFileSystem() {
-        System.out.println("hello, file system.");
+        System.out.println(LOGGED_IN_MESSAGE + "\n");
+
+        boolean running = true;
+        String command;
+        do {
+            System.out.printf(user.getUsername() + "@MiniFS" + PROMPT + " ");
+
+            command = input.nextLine().trim();
+            switch (command) {
+                case "help":
+                    help();
+                    break;
+                case "ls":
+                    list();
+                    break;
+                case "clear":
+                    clearTerminal();
+                    break;
+                case "logout":
+                    running = false;
+                    start();
+                    break;
+                case "poweroff":
+                    running = false;
+                    break;
+                default:
+                    System.out.printf("Command '%s' not found.\n", command);
+            }
+        } while (running);
     }
 
     public static void help() {
