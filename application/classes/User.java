@@ -1,4 +1,7 @@
+package application.classes;
+
 public class User {
+
     private int id;
     private String username;
     private String password;
@@ -11,7 +14,7 @@ public class User {
         this.role = role;
     }
 
-    public boolean authenticate (String password) {
+    public boolean authenticate(String password) {
         return this.password.equals(password);
     }
 
@@ -26,5 +29,4 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
-    
 }

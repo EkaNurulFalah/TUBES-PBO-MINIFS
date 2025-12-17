@@ -1,3 +1,4 @@
+package application.classes;
 
 public class Node {
 
@@ -8,7 +9,14 @@ public class Node {
     private User owner;
     private String createdAt;
 
-    public Node(int id, String name, String type, Directory parent, User owner, String createdAt) {
+    public Node(
+        int id,
+        String name,
+        String type,
+        Directory parent,
+        User owner,
+        String createdAt
+    ) {
         this.id = id;
         this.name = name;
         this.type = type;
@@ -18,11 +26,11 @@ public class Node {
     }
 
     public String getName() {
-
+        return "";
     }
 
     public String setName(String name) {
-
+        return "";
     }
 
     public Directory getParent() {
@@ -34,8 +42,6 @@ public class Node {
     }
 
     public String getPath() {
-        
+        return "";
     }
-
 }
-
