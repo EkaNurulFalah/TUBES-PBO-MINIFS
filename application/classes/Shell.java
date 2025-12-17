@@ -23,15 +23,18 @@ public class Shell {
     static Scanner input = new Scanner(System.in);
     private User user;
     private Directory directory;
+    private Directory root;
 
     public Shell(User user, Directory directory) {
         this.user = user;
         this.directory = directory;
+        root = directory;
     }
 
     public Shell() {
         this.user = new User("1337", "noah", "123", "user");
         this.directory = new Directory();
+        root = directory;
     }
 
     private void clearTerminal() {
@@ -110,7 +113,11 @@ public class Shell {
                     list();
                     break;
                 case "cd":
-                    changeDirectory(arguments[0]);
+                    if (arguments.length == 0) {
+                        directory = root;
+                    } else {
+                        changeDirectory(arguments[0]);
+                    }
                     break;
                 case "clear":
                     clearTerminal();
@@ -130,7 +137,6 @@ public class Shell {
 
     private void changeDirectory(String target) {
         if (target.equals("..")) {
-            System.out.println("lets go back :)");
             directory = directory.getParent();
         } else {
             directory = (Directory) directory.getChild(target);
