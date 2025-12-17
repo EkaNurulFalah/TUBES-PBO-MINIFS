@@ -1,5 +1,8 @@
 package application.classes;
 
+import application.classes.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Shell {
@@ -28,10 +31,10 @@ public class Shell {
 
     public Shell() {
         this.user = new User("1337", "noah", "123", "user");
-        this.directory = null;
+        this.directory = new Directory();
     }
 
-    private static void clearTerminal() {
+    private void clearTerminal() {
         try {
             new ProcessBuilder("clear").inheritIO().start().waitFor();
         } catch (Exception ignored) {}
@@ -74,7 +77,7 @@ public class Shell {
         System.out.printf("%s\n\n", LOGIN_BANNER);
     }
 
-    private static boolean login() {
+    private boolean login() {
         System.out.print("username: ");
         String username = input.nextLine();
         System.out.print("password: ");
@@ -87,17 +90,28 @@ public class Shell {
         System.out.println(LOGGED_IN_MESSAGE + "\n");
 
         boolean running = true;
-        String command;
         do {
-            System.out.printf(user.getUsername() + "@MiniFS" + PROMPT + " ");
+            System.out.printf(
+                user.getUsername() +
+                    "@MiniFS:" +
+                    directory.getPath() +
+                    PROMPT +
+                    " "
+            );
 
-            command = input.nextLine().trim();
-            switch (command) {
+            String[] command = input.nextLine().split(" ");
+            String name = command[0];
+            String[] arguments = Arrays.copyOfRange(command, 1, command.length);
+            switch (name) {
                 case "help":
                     help();
                     break;
                 case "ls":
                     list();
+                    break;
+                case "cd":
+                    String target = arguments[0];
+                    changeDirectory(target);
                     break;
                 case "clear":
                     clearTerminal();
@@ -110,16 +124,25 @@ public class Shell {
                     running = false;
                     break;
                 default:
-                    System.out.printf("Command '%s' not found.\n", command);
+                    System.out.printf("Command '%s' not found.\n", name);
             }
         } while (running);
     }
 
-    public static void help() {
+    private void changeDirectory(String target) {
+        if (target.equals("..")) {
+            System.out.println("lets go back :)");
+            directory = directory.getParent();
+        } else {
+            directory = (Directory) directory.getChild(target);
+        }
+    }
+
+    public void help() {
         System.out.println("help menu");
     }
 
-    public static void list() {
-        System.out.println("list of folder/file");
+    public void list() {
+        directory.listChildren();
     }
 }

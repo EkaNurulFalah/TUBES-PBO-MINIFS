@@ -26,7 +26,7 @@ public class Node {
     }
 
     public String getName() {
-        return "";
+        return name;
     }
 
     public String setName(String name) {
@@ -41,7 +41,7 @@ public class Node {
         this.parent = parent;
     }
 
-    public String getPath() {
-        return "";
+    public String getType() {
+        return type;
     }
 }
