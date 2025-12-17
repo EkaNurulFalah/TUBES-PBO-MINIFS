@@ -1,4 +1,19 @@
+package application.classes;
+
+import java.util.Scanner;
+
 public class Shell {
+
+    private static final String LOGIN_BANNER =
+        "███╗   ███╗██╗███╗   ██╗██╗███████╗███████╗\n" +
+        "████╗ ████║██║████╗  ██║██║██╔════╝██╔════╝\n" +
+        "██╔████╔██║██║██╔██╗ ██║██║█████╗  ███████╗\n" +
+        "██║╚██╔╝██║██║██║╚██╗██║██║██╔══╝  ╚════██║\n" +
+        "██║ ╚═╝ ██║██║██║ ╚████║██║██║     ███████║\n" +
+        "╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝╚═╝     ╚══════╝\n" +
+        "● login\n" +
+        "● exit";
+    static Scanner input = new Scanner(System.in);
     private User current;
     private Directory currentDirectory;
 
@@ -7,40 +22,72 @@ public class Shell {
         this.currentDirectory = currentDirectory;
     }
 
+    public Shell() {
+        this.current = null;
+        this.currentDirectory = null;
+    }
+
+    private static void clearTerminal() {
+        try {
+            new ProcessBuilder("clear").inheritIO().start().waitFor();
+        } catch (Exception ignored) {}
+    }
+
     public void start() {
-
-    }
-    
-    public void executeCommand(String command) {
-
+        clearTerminal();
+        if (!authenticate()) return;
+        runFileSystem();
     }
 
-    public void changeDirectory(String path) {
+    private boolean authenticate() {
+        loginMenu();
+        while (true) {
+            System.out.print("✦ ");
+            String command = input.nextLine().trim();
 
+            if (command.equals("login")) {
+                if (login()) {
+                    clearTerminal();
+                    return true;
+                }
+
+                clearTerminal();
+                loginMenu("Login Failed!");
+            } else if (command.equals("exit")) {
+                return false;
+            } else {
+                clearTerminal();
+                loginMenu("invalid option: " + command);
+            }
+        }
     }
 
-    public void list() {
-
+    private void loginMenu(String errorMessage) {
+        System.out.printf("%s\n\n%s\n\n", LOGIN_BANNER, errorMessage);
     }
 
-    public void makeDirectory(String name) {
-
+    private void loginMenu() {
+        System.out.printf("%s\n\n", LOGIN_BANNER);
     }
 
-    public void createFile(String name, String content) {
+    private static boolean login() {
+        System.out.print("username: ");
+        String username = input.nextLine();
+        System.out.print("password: ");
+        String password = input.nextLine();
 
+        return username.equals("noah") && password.equals("123");
     }
 
-    public void readFile(String name) {
-
+    private void runFileSystem() {
+        System.out.println("hello, file system.");
     }
 
-    public void writeFile(String name, String content) {
-
+    public static void help() {
+        System.out.println("help menu");
     }
 
-    public void deleteNode(String name) {
-
+    public static void list() {
+        System.out.println("list of folder/file");
     }
-
 }
