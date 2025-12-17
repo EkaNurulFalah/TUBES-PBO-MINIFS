@@ -1,0 +1,10 @@
+Import database
+    database/MiniFS.db
+
+Compile lalu jalankan
+    javac -cp libraries/mysql-connector-j-9.5.0.jar Main.java
+    java -cp .:libraries/mysql-connector-j-9.5.0.jar Main
+
+Kalau tidak bisa coba (Windows)
+    javac -cp libraries\mysql-connector-j-8.3.0.jar Main.java
+    java -cp .;libs\mysql-connector-j-8.3.0.jar Main
