@@ -110,8 +110,7 @@ public class Shell {
                     list();
                     break;
                 case "cd":
-                    String target = arguments[0];
-                    changeDirectory(target);
+                    changeDirectory(arguments[0]);
                     break;
                 case "clear":
                     clearTerminal();
