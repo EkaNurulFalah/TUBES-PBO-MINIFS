@@ -45,4 +45,8 @@ public class Directory extends Node {
 
         return null;
     }
+
+    public void addChild(Directory directory) {
+        children.add(directory);
+    }
 }

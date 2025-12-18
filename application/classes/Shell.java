@@ -1,5 +1,6 @@
 package application.classes;
 
+import application.classes.Directory;
 import application.classes.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -119,6 +120,9 @@ public class Shell {
                         changeDirectory(arguments[0]);
                     }
                     break;
+                case "mkdir":
+                    makeDirectory(arguments[0]);
+                    break;
                 case "clear":
                     clearTerminal();
                     break;
@@ -149,5 +153,10 @@ public class Shell {
 
     public void list() {
         directory.listChildren();
+    }
+
+    public void makeDirectory(String name) {
+        System.out.println("lets make directory");
+        directory.addChild(new Directory(name, directory));
     }
 }
