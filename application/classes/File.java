@@ -13,11 +13,13 @@ public class File extends Node {
         super(777, name, "directory", parent, null, "01-01-2001");
     }
 
-    public String read() {
-        return "";
+    public void read() {
+        System.out.println(content);
     }
 
-    public void write(String text) {}
+    public void write(String text) {
+        content = text;
+    }
 
     public String getInfo() {
         return "";

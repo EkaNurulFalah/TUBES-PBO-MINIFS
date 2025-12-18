@@ -126,6 +126,12 @@ public class Shell {
                 case "touch":
                     makeFile(arguments[0]);
                     break;
+                case "echo":
+                    echo(arguments[0], arguments[2]);
+                    break;
+                case "cat":
+                    readFile(arguments[0]);
+                    break;
                 case "clear":
                     clearTerminal();
                     break;
@@ -166,5 +172,17 @@ public class Shell {
     public void makeFile(String name) {
         System.out.println("lets make file");
         directory.addChild(new File(name, directory));
+    }
+
+    public void echo(String content, String target) {
+        System.out.println(target);
+        System.out.println("lets write to a file :)");
+
+        ((File) directory.getChild(target)).write(content);
+    }
+
+    public void readFile(String target) {
+        System.out.println("lets read a file");
+        ((File) directory.getChild(target)).read();
     }
 }

@@ -36,10 +36,7 @@ public class Directory extends Node {
 
     public Node getChild(String target) {
         for (Node node : children) {
-            if (
-                node.getType().equals("directory") &&
-                node.getName().equals(target)
-            ) {
+            if (node.getName().equals(target)) {
                 return node;
             }
         }
