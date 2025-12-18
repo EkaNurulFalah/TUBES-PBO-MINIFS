@@ -1,4 +1,4 @@
-public class File {
+public class File extends Node {
     private String content;
 
     public File (String content) {

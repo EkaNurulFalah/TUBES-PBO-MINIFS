@@ -1,20 +1,20 @@
 
-public class Node {
+public abstract class Node {
 
     private int id;
     private String name;
     private String type;
     private Directory parent;
     private User owner;
-    private String createdAt;
+    // private String createdAt;
 
-    public Node(int id, String name, String type, Directory parent, User owner, String createdAt) {
+    public Node(int id, String name, String , Directory parent) {
         this.id = id;
         this.name = name;
-        this.type = type;
+        // this.type = type;
         this.parent = parent;
         this.owner = owner;
-        this.createdAt = createdAt;
+        // this.createdAt = createdAt;
     }
 
     public String getName() {
@@ -34,8 +34,7 @@ public class Node {
     }
 
     public String getPath() {
-        
+
     }
 
 }
-
