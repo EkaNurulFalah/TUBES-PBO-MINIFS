@@ -7,4 +7,6 @@ Compile lalu jalankan
 
 Kalau tidak bisa coba (Windows)
     javac -cp libraries\mysql-connector-j-8.3.0.jar Main.java
+    javac -cp libraries\mysql-connector-j-9.5.0 Main.java
+    java -cp .;libs\mysql-connector-j-9.5.0 Main
     java -cp .;libs\mysql-connector-j-8.3.0.jar Main
