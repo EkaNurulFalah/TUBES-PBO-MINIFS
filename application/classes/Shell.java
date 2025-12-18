@@ -123,6 +123,9 @@ public class Shell {
                 case "mkdir":
                     makeDirectory(arguments[0]);
                     break;
+                case "touch":
+                    makeFile(arguments[0]);
+                    break;
                 case "clear":
                     clearTerminal();
                     break;
@@ -158,5 +161,10 @@ public class Shell {
     public void makeDirectory(String name) {
         System.out.println("lets make directory");
         directory.addChild(new Directory(name, directory));
+    }
+
+    public void makeFile(String name) {
+        System.out.println("lets make file");
+        directory.addChild(new File(name, directory));
     }
 }

@@ -9,6 +9,10 @@ public class File extends Node {
         this.content = "";
     }
 
+    public File(String name, Directory parent) {
+        super(777, name, "directory", parent, null, "01-01-2001");
+    }
+
     public String read() {
         return "";
     }

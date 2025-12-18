@@ -18,6 +18,7 @@ public class Directory extends Node {
 
     public Directory(String name, Directory parent) {
         super(777, name, "directory", parent, null, "01-01-2001");
+        children = new ArrayList<>();
         path = parent.getPath() + "/" + name;
     }
 
@@ -46,7 +47,7 @@ public class Directory extends Node {
         return null;
     }
 
-    public void addChild(Directory directory) {
-        children.add(directory);
+    public void addChild(Node child) {
+        children.add(child);
     }
 }
