@@ -1,6 +1,7 @@
 package application.classes;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class Directory extends Node {
 
@@ -46,5 +47,35 @@ public class Directory extends Node {
 
     public void addChild(Node child) {
         children.add(child);
+    }
+
+    public void deleteChild(String name) {
+        Iterator<Node> iterator = children.iterator();
+
+        while (iterator.hasNext()) {
+            Node child = iterator.next();
+
+            if (child.getName().equals(name)) {
+                // If directory, delete all its contents recursively
+                if (child instanceof Directory) {
+                    Directory dir = (Directory) child;
+                    dir.deleteAllChildren();
+                }
+
+                // Remove the node itself (file or directory)
+                iterator.remove();
+                return;
+            }
+        }
+    }
+
+    private void deleteAllChildren() {
+        for (Node child : children) {
+            if (child instanceof Directory) {
+                Directory dir = (Directory) child;
+                dir.deleteAllChildren();
+            }
+        }
+        children.clear();
     }
 }

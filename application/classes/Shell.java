@@ -46,7 +46,7 @@ public class Shell {
 
     public void start() {
         clearTerminal();
-        if (!authenticate()) return;
+        // if (!authenticate()) return;
         runFileSystem();
     }
 
@@ -132,6 +132,9 @@ public class Shell {
                 case "cat":
                     readFile(arguments[0]);
                     break;
+                case "rm":
+                    remove(arguments[0]);
+                    break;
                 case "clear":
                     clearTerminal();
                     break;
@@ -184,5 +187,9 @@ public class Shell {
     public void readFile(String target) {
         System.out.println("lets read a file");
         ((File) directory.getChild(target)).read();
+    }
+
+    public void remove(String name) {
+        directory.deleteChild(name);
     }
 }
