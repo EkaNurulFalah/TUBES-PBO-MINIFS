@@ -10,3 +10,6 @@ Kalau tidak bisa coba (Windows)
     javac -cp libraries\mysql-connector-j-9.5.0 Main.java
     java -cp .;libs\mysql-connector-j-9.5.0 Main
     java -cp .;libs\mysql-connector-j-8.3.0.jar Main
+
+    PS C:\Users\Eka Nurul Falah\Documents\Smt3\PBO\TUBES-PBO-MINIFS> javac -cp ".;application/libraries/mysql-connector-j-9.5.0.jar" application/Main.java
+PS C:\Users\Eka Nurul Falah\Documents\Smt3\PBO\TUBES-PBO-MINIFS> java -cp ".;application/libraries/mysql-connector-j-9.5.0.jar" application.Main
