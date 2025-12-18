@@ -17,14 +17,25 @@ public class Main {
     public static void main(String[] args) {
         Console.clear();
 
-        // auth login -> get use
-        User user = login();
+        while (true) {
+            User user = login();
+            if (user == null) {
+                break; // exit program
+            }
 
-        Directory directory = DB.getRoot(user.getId());
-        DB.loadChildren(directory); // 🔥 THIS WAS MISSING
+            Directory root = DB.getRoot(user.getId());
+            DB.loadChildren(root);
 
-        Shell shell = new Shell(user, directory);
-        shell.run();
+            Shell shell = new Shell(user, root);
+            ShellExit exit = shell.run();
+
+            if (exit == ShellExit.POWEROFF) {
+                break;
+            }
+
+            // LOGOUT → loop continues → back to login menu
+            Console.clear();
+        }
     }
 
     private static User login() {

@@ -1,4 +1,4 @@
-public class File extends Node implements Readable {
+public class File extends Node implements Readable, Writeable {
 
     private String content;
 
@@ -21,5 +21,10 @@ public class File extends Node implements Readable {
     @Override
     public void read() {
         System.out.println(content);
+    }
+
+    @Override
+    public void write(String text) {
+        content = text;
     }
 }

@@ -48,4 +48,12 @@ public class Directory extends Node {
             }
         }
     }
+
+    public void removeChild(Node target) {
+        children.remove(target);
+    }
+
+    public boolean hasChild(String name) {
+        return getChild(name) != null;
+    }
 }

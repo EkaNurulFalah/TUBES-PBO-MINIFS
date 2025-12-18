@@ -25,5 +25,9 @@ public abstract class Node {
         return parent.getPath() + "/" + name;
     }
 
+    public int getId() {
+        return id;
+    }
+
     public abstract boolean isDirectory();
 }

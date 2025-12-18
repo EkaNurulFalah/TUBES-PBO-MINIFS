@@ -1,4 +1,6 @@
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 public class Shell {
@@ -18,10 +20,11 @@ public class Shell {
         root = directory;
     }
 
-    public void run() {
+    public ShellExit run() {
         System.out.println(LOGGED_IN_MESSAGE + "\n");
 
         boolean running = true;
+
         do {
             System.out.printf(
                 user.getUsername() +
@@ -31,9 +34,25 @@ public class Shell {
                     " "
             );
 
-            String[] command = input.nextLine().split(" ");
-            String name = command[0];
-            String[] arguments = Arrays.copyOfRange(command, 1, command.length);
+            String line = input.nextLine().trim();
+
+            if (line.isEmpty()) {
+                continue;
+            }
+
+            String name;
+            String rest;
+
+            int firstSpace = line.indexOf(' ');
+
+            if (firstSpace == -1) {
+                name = line;
+                rest = "";
+            } else {
+                name = line.substring(0, firstSpace);
+                rest = line.substring(firstSpace + 1).trim();
+            }
+
             switch (name) {
                 case "help":
                     help();
@@ -45,39 +64,52 @@ public class Shell {
                     Console.clear();
                     break;
                 case "cd":
-                    if (arguments.length == 0) {
+                    if (rest.isEmpty()) {
                         directory = root;
                     } else {
-                        changeDirectory(arguments[0]);
+                        changeDirectory(rest);
                     }
                     break;
                 case "cat":
-                    readFile(arguments[0]);
+                    if (rest.isEmpty()) {
+                        System.out.println("cat: missing file operand");
+                    } else {
+                        readFile(rest);
+                    }
                     break;
+                case "mkdir":
+                    if (rest.isEmpty()) {
+                        System.out.println("mkdir: missing operand");
+                    } else {
+                        makeDirectory(rest);
+                    }
+                    break;
+                case "touch":
+                    if (rest.isEmpty()) {
+                        System.out.println("touch: missing file operand");
+                    } else {
+                        makeFile(rest);
+                    }
+                    break;
+                case "echo":
+                    handleEcho(line); // 🔥 raw line
+                    break;
+                case "rm":
+                    remove(rest); // 🔥 raw line
+                    break;
+                case "logout":
+                    return ShellExit.LOGOUT;
                 case "poweroff":
-                    running = false;
+                    return ShellExit.POWEROFF;
+                case "user":
+                    handleUser(rest);
                     break;
                 default:
                     System.out.printf("Command '%s' not found.\n", name);
             }
-            //     switch (name) {
-            //         case "mkdir":
-            //             makeDirectory(arguments[0]);
-            //             break;
-            //         case "touch":
-            //             makeFile(arguments[0]);
-            //             break;
-            //         case "echo":
-            //             echo(arguments[0], arguments[2]);
-            //             break;
-            //         case "cat":
-            //             readFile(arguments[0]);
-            //             break;
-            //         case "rm":
-            //             remove(arguments[0]);
-            //             break;
-            //     }
         } while (running);
+
+        return ShellExit.POWEROFF;
     }
 
     public void help() {
@@ -146,25 +178,60 @@ public class Shell {
         directory = next;
     }
 
-    // public void makeDirectory(String name) {
-    //     System.out.println("lets make directory");
-    //     directory.addChild(new Directory(name, directory));
-    // }
+    public void makeDirectory(String name) {
+        if (directory.getChildren().isEmpty()) {
+            DB.loadChildren(directory);
+        }
 
-    // public void makeFile(String name) {
-    //     System.out.println("lets make file");
-    //     directory.addChild(new File(name, directory));
-    // }
+        if (directory.getChild(name) != null) {
+            System.out.println("mkdir: directory already exists");
+            return;
+        }
 
-    // public void echo(String content, String target) {
-    //     System.out.println(target);
-    //     System.out.println("lets write to a file :)");
+        Directory dir = DB.createDirectory(name, directory);
 
-    //     ((File) directory.getChild(target)).write(content);
-    // }
+        if (dir != null) {
+            directory.addChild(dir);
+        }
+    }
 
-    public void readFile(String target) {
-        // Ensure directory contents are loaded
+    public void makeFile(String name) {
+        if (directory.getChildren().isEmpty()) {
+            DB.loadChildren(directory);
+        }
+
+        if (directory.getChild(name) != null) {
+            System.out.println("touch: file already exists");
+            return;
+        }
+
+        File file = DB.createFile(name, directory);
+
+        if (file != null) {
+            directory.addChild(file);
+        }
+    }
+
+    private void handleEcho(String line) {
+        int redirect = line.indexOf('>');
+
+        if (redirect == -1) {
+            System.out.println("echo: missing redirection");
+            return;
+        }
+
+        String content = line.substring(5, redirect).trim();
+        String target = line.substring(redirect + 1).trim();
+
+        if (content.startsWith("\"") && content.endsWith("\"")) {
+            content = content.substring(1, content.length() - 1);
+        }
+
+        echo(content, target);
+    }
+
+    public void echo(String content, String target) {
+        // Ensure directory is loaded
         if (directory.getChildren().isEmpty()) {
             DB.loadChildren(directory);
         }
@@ -172,20 +239,263 @@ public class Shell {
         Node node = directory.getChild(target);
 
         if (node == null) {
-            System.out.println("cat: no such file: " + target);
+            System.out.println("echo: no such file: " + target);
             return;
         }
 
         if (node.isDirectory()) {
-            System.out.println("cat: " + target + ": is a directory");
+            System.out.println("echo: " + target + ": is a directory");
             return;
         }
 
         File file = (File) node;
-        file.read();
+
+        // 🔥 DB is source of truth
+        DB.writeFile(file.getId(), content);
+
+        // update in-memory copy
+        file.write(content);
     }
 
-    // public void remove(String name) {
-    //     directory.deleteChild(name);
-    // }
+    public void readFile(String target) {
+        if (directory.getChildren().isEmpty()) {
+            DB.loadChildren(directory);
+        }
+
+        Node node = directory.getChild(target);
+
+        if (node == null || node.isDirectory()) {
+            System.out.println("cat: invalid file");
+            return;
+        }
+
+        File file = (File) node;
+
+        // 🔥 ALWAYS read fresh content
+        String content = DB.readFileContent(file.getId());
+        System.out.println(content);
+    }
+
+    private void remove(String rest) {
+        if (rest.isEmpty()) {
+            System.out.println("rm: missing operand");
+            return;
+        }
+
+        boolean recursive = false;
+        String target;
+
+        if (rest.startsWith("-r ")) {
+            recursive = true;
+            target = rest.substring(3).trim();
+        } else {
+            target = rest.trim();
+        }
+
+        if (target.equals(".") || target.equals("..")) {
+            System.out.println("rm: refusing to remove " + target);
+            return;
+        }
+
+        // ensure children loaded
+        if (directory.getChildren().isEmpty()) {
+            DB.loadChildren(directory);
+        }
+
+        Node node = directory.getChild(target);
+
+        if (node == null) {
+            System.out.println(
+                "rm: cannot remove '" + target + "': No such file or directory"
+            );
+            return;
+        }
+
+        // directory handling
+        if (node.isDirectory()) {
+            Directory dir = (Directory) node;
+
+            if (!recursive) {
+                System.out.println(
+                    "rm: cannot remove '" + target + "': Is a directory"
+                );
+                return;
+            }
+
+            // optional safety: load children to check emptiness
+            DB.loadChildren(dir);
+        }
+
+        // 🔥 delete from DB first
+        boolean deleted = DB.deleteNode(node.id, user.getId());
+
+        if (!deleted) {
+            System.out.println("rm: failed to remove '" + target + "'");
+            return;
+        }
+
+        // remove from memory tree
+        directory.removeChild(node);
+    }
+
+    private void handleUser(String rest) {
+        if (!user.isAdmin()) {
+            System.out.println("Permission denied: admin only");
+            return;
+        }
+
+        String[] parts = rest.split(" ");
+
+        if (parts.length == 0) {
+            System.out.println("user: missing command");
+            return;
+        }
+
+        switch (parts[0]) {
+            case "add": {
+                if (parts.length < 3) {
+                    System.out.println(
+                        "Usage: user add <username> <password> [role]"
+                    );
+                    return;
+                }
+
+                String username = parts[1];
+                String password = parts[2];
+                String role = (parts.length >= 4) ? parts[3] : "user";
+
+                if (!role.equals("user") && !role.equals("admin")) {
+                    System.out.println("Invalid role: " + role);
+                    return;
+                }
+
+                if (DB.userExists(username)) {
+                    System.out.println("User already exists");
+                    return;
+                }
+
+                if (DB.createUser(username, password, role)) {
+                    User newUser = DB.getUserByUsername(username);
+
+                    if (newUser != null) {
+                        DB.createInitialFileSystem(newUser.getId());
+                    }
+
+                    System.out.println("User created: " + username);
+                }
+
+                break;
+            }
+            case "setname": {
+                if (parts.length < 3) {
+                    System.out.println(
+                        "Usage: user setname <oldUsername> <newUsername>"
+                    );
+                    return;
+                }
+
+                String oldName = parts[1];
+                String newName = parts[2];
+
+                User target = DB.getUserByUsername(oldName);
+                if (target == null) {
+                    System.out.println("User not found");
+                    return;
+                }
+
+                if (DB.userExists(newName)) {
+                    System.out.println("Username already exists");
+                    return;
+                }
+
+                if (DB.updateUsername(target.getId(), newName)) {
+                    // 🔥 if admin renamed THEMSELVES, update session object
+                    if (target.getId() == user.getId()) {
+                        user.setUsername(newName);
+                    }
+
+                    System.out.println(
+                        "Username updated: " + oldName + " → " + newName
+                    );
+                } else {
+                    System.out.println("Failed to update username");
+                }
+                break;
+            }
+            case "setpass": {
+                if (parts.length < 3) {
+                    System.out.println(
+                        "Usage: user setpass <username> <newPassword>"
+                    );
+                    return;
+                }
+
+                String username = parts[1];
+                String newPass = parts[2];
+
+                User target = DB.getUserByUsername(username);
+                if (target == null) {
+                    System.out.println("User not found");
+                    return;
+                }
+
+                if (DB.updatePassword(target.getId(), newPass)) {
+                    System.out.println(
+                        "Password updated for user: " + username
+                    );
+
+                    // optional: force logout if admin changes own password
+                    if (target.getId() == user.getId()) {
+                        System.out.println("Please log in again.");
+                        // return ShellExit.LOGOUT; (if you want this behavior)
+                    }
+                } else {
+                    System.out.println("Failed to update password");
+                }
+                break;
+            }
+            case "list": {
+                ArrayList<User> users = DB.getAllUsers();
+
+                System.out.println("ID   USERNAME   ROLE");
+                for (User u : users) {
+                    System.out.printf(
+                        "%-4d %-10s %s%n",
+                        u.getId(),
+                        u.getUsername(),
+                        u.getRole()
+                    );
+                }
+                break;
+            }
+            case "del": {
+                if (parts.length < 2) {
+                    System.out.println("Usage: user del <username>");
+                    return;
+                }
+
+                String username = parts[1];
+
+                User target = DB.getUserByUsername(username);
+                if (target == null) {
+                    System.out.println("User not found");
+                    return;
+                }
+
+                if (target.getId() == user.getId()) {
+                    System.out.println("Cannot delete yourself");
+                    return;
+                }
+
+                if (DB.deleteUser(target.getId())) {
+                    System.out.println("User deleted: " + username);
+                } else {
+                    System.out.println("Failed to delete user");
+                }
+                break;
+            }
+            default:
+                System.out.println("Unknown user command");
+        }
+    }
 }

@@ -4,9 +4,8 @@ public class Admin extends User {
         super(id, username, password, "admin");
     }
 
-    public void createUser(String username, String password, String role) {}
-
-    public void deleteUser(String username) {}
-
-    public void resetPassword(String username, String newPassword) {}
+    @Override
+    public boolean isAdmin() {
+        return true;
+    }
 }

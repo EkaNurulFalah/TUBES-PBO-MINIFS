@@ -1,3 +1,3 @@
 public interface Writeable {
-    void write(String text);
+    public void write(String text);
 }

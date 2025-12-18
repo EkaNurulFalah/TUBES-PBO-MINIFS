@@ -35,4 +35,8 @@ public class User {
     public String getRole() {
         return role;
     }
+
+    public boolean isAdmin() {
+        return false;
+    }
 }

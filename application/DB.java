@@ -2,6 +2,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 // import java.sql.Statement;
 // import java.util.ArrayList;
@@ -12,32 +15,40 @@ public class DB {
     private static final String USER = "root";
     private static final String PASSWORD = "";
 
-    public static User getUser(String name, String password) {
+    public static User getUser(String username, String password) {
         String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
 
         try (
             Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
             PreparedStatement ps = conn.prepareStatement(sql)
         ) {
-            ps.setString(1, name);
+            ps.setString(1, username);
             ps.setString(2, password);
 
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                // System.out.println("db found something");
+                String role = rs.getString("role");
+
+                if ("admin".equals(role)) {
+                    return new Admin(
+                        rs.getInt("id"),
+                        rs.getString("username"),
+                        rs.getString("password")
+                    );
+                }
+
                 return new User(
                     rs.getInt("id"),
                     rs.getString("username"),
                     rs.getString("password"),
-                    rs.getString("role")
+                    role
                 );
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        // System.out.println("db not found shits");
         return null;
     }
 
@@ -123,5 +134,401 @@ public class DB {
                 loadTree((Directory) n);
             }
         }
+    }
+
+    public static Directory createDirectory(String name, Directory parent) {
+        String sql = """
+            INSERT INTO nodes (name, type, owner, parent)
+            VALUES (?, 'directory', ?, ?)
+            """;
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(
+                sql,
+                Statement.RETURN_GENERATED_KEYS
+            )
+        ) {
+            ps.setString(1, name);
+            ps.setInt(2, parent.ownerId);
+            ps.setInt(3, parent.id);
+
+            ps.executeUpdate();
+
+            ResultSet keys = ps.getGeneratedKeys();
+            if (keys.next()) {
+                return new Directory(
+                    keys.getInt(1),
+                    name,
+                    parent,
+                    parent.ownerId
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public static File createFile(String name, Directory parent) {
+        String sql = """
+            INSERT INTO nodes (name, type, content, owner, parent)
+            VALUES (?, 'file', '', ?, ?)
+            """;
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(
+                sql,
+                Statement.RETURN_GENERATED_KEYS
+            )
+        ) {
+            ps.setString(1, name);
+            ps.setInt(2, parent.ownerId);
+            ps.setInt(3, parent.id);
+
+            ps.executeUpdate();
+
+            ResultSet keys = ps.getGeneratedKeys();
+            if (keys.next()) {
+                return new File(
+                    keys.getInt(1),
+                    name,
+                    parent,
+                    parent.ownerId,
+                    ""
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public static void writeFile(int fileId, String content) {
+        String sql =
+            "UPDATE nodes SET content = ? WHERE id = ? AND type = 'file'";
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setString(1, content);
+            ps.setInt(2, fileId);
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String readFileContent(int fileId) {
+        String sql = "SELECT content FROM nodes WHERE id = ? AND type = 'file'";
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setInt(1, fileId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return rs.getString("content");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+    public static boolean deleteNode(int nodeId, int ownerId) {
+        String sql = "DELETE FROM nodes WHERE id = ? AND owner = ?";
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setInt(1, nodeId);
+            ps.setInt(2, ownerId);
+
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public static boolean updateUsername(int userId, String newUsername) {
+        String sql = "UPDATE users SET username = ? WHERE id = ?";
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setString(1, newUsername);
+            ps.setInt(2, userId);
+
+            return ps.executeUpdate() == 1;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public static boolean updatePassword(int userId, String newPassword) {
+        String sql = "UPDATE users SET password = ? WHERE id = ?";
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setString(1, newPassword);
+            ps.setInt(2, userId);
+
+            return ps.executeUpdate() == 1;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public static User getUserByUsername(String username) {
+        String sql = "SELECT * FROM users WHERE username = ?";
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setString(1, username);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return new User(
+                    rs.getInt("id"),
+                    rs.getString("username"),
+                    rs.getString("password"),
+                    rs.getString("role")
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public static boolean createUser(
+        String username,
+        String password,
+        String role
+    ) {
+        String sql = """
+            INSERT INTO users (username, password, role)
+            VALUES (?, ?, ?)
+            """;
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setString(1, username);
+            ps.setString(2, password);
+            ps.setString(3, role);
+
+            ps.executeUpdate();
+            return true;
+        } catch (Exception e) {
+            // duplicate username, etc.
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public static boolean userExists(String username) {
+        String sql = "SELECT 1 FROM users WHERE username = ?";
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setString(1, username);
+            return ps.executeQuery().next();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public static ArrayList<User> getAllUsers() {
+        ArrayList<User> users = new ArrayList<>();
+
+        String sql = "SELECT * FROM users ORDER BY id";
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                String role = rs.getString("role");
+
+                if ("admin".equals(role)) {
+                    users.add(
+                        new Admin(
+                            rs.getInt("id"),
+                            rs.getString("username"),
+                            rs.getString("password")
+                        )
+                    );
+                } else {
+                    users.add(
+                        new User(
+                            rs.getInt("id"),
+                            rs.getString("username"),
+                            rs.getString("password"),
+                            role
+                        )
+                    );
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return users;
+    }
+
+    public static boolean deleteUser(int userId) {
+        String sql = "DELETE FROM users WHERE id = ?";
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setInt(1, userId);
+            return ps.executeUpdate() == 1;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public static int createNode(
+        String name,
+        String type,
+        String content,
+        int ownerId,
+        Integer parentId
+    ) {
+        String sql = """
+            INSERT INTO nodes (name, type, content, owner, parent)
+            VALUES (?, ?, ?, ?, ?)
+            """;
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(
+                sql,
+                Statement.RETURN_GENERATED_KEYS
+            )
+        ) {
+            ps.setString(1, name);
+            ps.setString(2, type);
+            ps.setString(3, content);
+            ps.setInt(4, ownerId);
+
+            if (parentId == null) {
+                ps.setNull(5, java.sql.Types.INTEGER);
+            } else {
+                ps.setInt(5, parentId);
+            }
+
+            ps.executeUpdate();
+
+            ResultSet keys = ps.getGeneratedKeys();
+            if (keys.next()) {
+                return keys.getInt(1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return -1;
+    }
+
+    public static void createInitialFileSystem(int userId) {
+        // root (~)
+        int rootId = createNode("/", "directory", null, userId, null);
+
+        // system
+        int systemId = createNode("system", "directory", null, userId, rootId);
+
+        String manual =
+            "MiniFS User Manual\n" +
+            "------------------\n" +
+            "Available Commands:\n\n" +
+            "  ls\n" +
+            "    list directory contents\n\n" +
+            "  cd <dir>\n" +
+            "    change directory\n" +
+            "    cd ..   go to parent\n" +
+            "    cd ~    go to root\n\n" +
+            "  mkdir <dir>\n" +
+            "    create a directory\n\n" +
+            "  touch <file>\n" +
+            "    create an empty file\n\n" +
+            "  rm <file>\n" +
+            "    delete a file\n\n" +
+            "  rm -r <dir>\n" +
+            "    delete a directory recursively\n\n" +
+            "  cat <file>\n" +
+            "    display file contents\n\n" +
+            "  echo <text> > <file>\n" +
+            "    write text to a file (overwrite)\n\n" +
+            "  user list\n" +
+            "    list all users (admin only)\n\n" +
+            "  user add <name> <pass> [role]\n" +
+            "    create a new user (admin only)\n\n" +
+            "  user setname <old> <new>\n" +
+            "    change a user's name (admin only)\n\n" +
+            "  user setpass <name> <pass>\n" +
+            "    change a user's password (admin only)\n\n" +
+            "  user del <name>\n" +
+            "    delete a user (admin only)\n\n" +
+            "  help\n" +
+            "    show this manual\n\n" +
+            "  logout\n" +
+            "    log out\n\n" +
+            "  poweroff\n" +
+            "    exit MiniFS\n";
+
+        createNode("manual.txt", "file", manual, userId, systemId);
+
+        // workspace
+        int workspaceId = createNode(
+            "workspace",
+            "directory",
+            null,
+            userId,
+            rootId
+        );
+
+        createNode("personal", "directory", null, userId, workspaceId);
+        createNode("work", "directory", null, userId, workspaceId);
+        createNode("notes", "directory", null, userId, workspaceId);
+
+        // logs
+        int logsId = createNode("logs", "directory", null, userId, rootId);
+
+        createNode("logs.txt", "file", "", userId, logsId);
     }
 }
