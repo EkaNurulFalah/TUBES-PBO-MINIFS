@@ -472,46 +472,46 @@ public class DB {
         // system
         int systemId = createNode("system", "directory", null, userId, rootId);
 
-        String manual =
-            "MiniFS User Manual\n" +
-            "------------------\n" +
-            "Available Commands:\n\n" +
-            "  ls\n" +
-            "    list directory contents\n\n" +
-            "  cd <dir>\n" +
-            "    change directory\n" +
-            "    cd ..   go to parent\n" +
-            "    cd ~    go to root\n\n" +
-            "  mkdir <dir>\n" +
-            "    create a directory\n\n" +
-            "  touch <file>\n" +
-            "    create an empty file\n\n" +
-            "  rm <file>\n" +
-            "    delete a file\n\n" +
-            "  rm -r <dir>\n" +
-            "    delete a directory recursively\n\n" +
-            "  cat <file>\n" +
-            "    display file contents\n\n" +
-            "  echo <text> > <file>\n" +
-            "    write text to a file (overwrite)\n\n" +
-            "  user list\n" +
-            "    list all users (admin only)\n\n" +
-            "  user add <name> <pass> [role]\n" +
-            "    create a new user (admin only)\n\n" +
-            "  user setname <old> <new>\n" +
-            "    change a user's name (admin only)\n\n" +
-            "  user setpass <name> <pass>\n" +
-            "    change a user's password (admin only)\n\n" +
-            "  user del <name>\n" +
-            "    delete a user (admin only)\n\n" +
-            "  help\n" +
-            "    show this manual\n\n" +
-            "  logout\n" +
-            "    log out\n\n" +
-            "  poweroff\n" +
-            "    exit MiniFS\n";
+        final String MANUAL = """
+            MiniFS Help
+            -----------
 
-        createNode("manual.txt", "file", manual, userId, systemId);
+            cat <file>                     display file contents
+
+            cd <dir>                       change directory (cd .. = parent, cd ~ = root)
+
+            clear                          clear the screen
+
+            echo <text> > <file>           write text to a file (overwrite)
+
+            help                           show command list
+
+            logout                         log out
+
+            ls                             list directory contents
+
+            mkdir <dir>                    create a directory
+
+            poweroff                       exit MiniFS
+
+            rm <file>                      delete a file
+
+            rm -r <dir>                    delete a directory recursively
+
+            touch <file>                   create an empty file
+
+            user list                      list all users (admin only)
+
+            user add <name> <pass> [role]  create a user (admin only)
+
+            user setname <old> <new>       change username (admin only)
+
+            user setpass <name> <pass>     change password (admin only)
+
+            user del <name>                delete a user (admin only)
+            """;
+
+        createNode("manual.txt", "file", MANUAL, userId, systemId);
 
         // workspace
         int workspaceId = createNode(
