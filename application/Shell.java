@@ -56,12 +56,15 @@ public class Shell {
             switch (name) {
                 case "help":
                     help();
+                    DB.createLog(line, user);
                     break;
                 case "ls":
                     list();
+                    DB.createLog(line, user);
                     break;
                 case "clear":
                     Console.clear();
+                    DB.createLog(line, user);
                     break;
                 case "cd":
                     if (rest.isEmpty()) {
@@ -69,6 +72,7 @@ public class Shell {
                     } else {
                         changeDirectory(rest);
                     }
+                    DB.createLog(line, user);
                     break;
                 case "cat":
                     if (rest.isEmpty()) {
@@ -76,6 +80,7 @@ public class Shell {
                     } else {
                         readFile(rest);
                     }
+                    DB.createLog(line, user);
                     break;
                 case "mkdir":
                     if (rest.isEmpty()) {
@@ -83,6 +88,7 @@ public class Shell {
                     } else {
                         makeDirectory(rest);
                     }
+                    DB.createLog(line, user);
                     break;
                 case "touch":
                     if (rest.isEmpty()) {
@@ -90,19 +96,29 @@ public class Shell {
                     } else {
                         makeFile(rest);
                     }
+                    DB.createLog(line, user);
                     break;
                 case "echo":
                     handleEcho(line); // 🔥 raw line
+                    DB.createLog(line, user);
                     break;
                 case "rm":
                     remove(rest); // 🔥 raw line
+                    DB.createLog(line, user);
                     break;
                 case "logout":
+                    DB.createLog(line, user);
                     return ShellExit.LOGOUT;
                 case "poweroff":
+                    DB.createLog(line, user);
                     return ShellExit.POWEROFF;
                 case "user":
                     handleUser(rest);
+                    DB.createLog(line, user);
+                    break;
+                case "history":
+                    history();
+                    DB.createLog(line, user);
                     break;
                 default:
                     System.out.printf("Command '%s' not found.\n", name);
@@ -120,6 +136,14 @@ public class Shell {
             ((File) node).read();
         } else {
             System.out.println("help: manual not found");
+        }
+    }
+
+    public void history() {
+        ArrayList<String> logs = DB.getLogs(user);
+
+        for (String log : logs) {
+            System.out.println(log);
         }
     }
 

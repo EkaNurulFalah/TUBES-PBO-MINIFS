@@ -6,9 +6,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-// import java.sql.Statement;
-// import java.util.ArrayList;
-
 public class DB {
 
     private static final String URL = "jdbc:mysql://localhost:3306/minifs";
@@ -205,6 +202,56 @@ public class DB {
         }
 
         return null;
+    }
+
+    public static void createLog(String command, User owner) {
+        String sql = """
+            INSERT INTO commands_log (command, user_id)
+            VALUES (?, ?)
+            """;
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(
+                sql,
+                Statement.RETURN_GENERATED_KEYS
+            )
+        ) {
+            ps.setString(1, command);
+            ps.setInt(2, owner.getId());
+
+            ps.executeUpdate();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static ArrayList<String> getLogs(User owner) {
+        ArrayList<String> logs = new ArrayList<>();
+
+        String sql = "SELECT * FROM commands_log WHERE user_id = ? ORDER BY id";
+
+        try (
+            Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            PreparedStatement ps = conn.prepareStatement(sql)
+        ) {
+            ps.setInt(1, owner.getId());
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                logs.add(
+                    String.format(
+                        "%-30s %s",
+                        rs.getString("command"),
+                        rs.getString("timestamp")
+                    )
+                );
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return logs;
     }
 
     public static void writeFile(int fileId, String content) {
