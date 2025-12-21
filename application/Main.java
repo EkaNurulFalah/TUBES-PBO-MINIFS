@@ -20,12 +20,11 @@ public class Main {
         while (true) {
             User user = login();
             if (user == null) {
-                break; // exit program
+                break;
             }
 
             Directory root = DB.getRoot(user.getId());
             DB.loadChildren(root);
-
             Shell shell = new Shell(user, root);
             ShellExit exit = shell.run();
 
@@ -33,7 +32,6 @@ public class Main {
                 break;
             }
 
-            // LOGOUT → loop continues → back to login menu
             Console.clear();
         }
     }
@@ -48,7 +46,6 @@ public class Main {
                 User user = authenticate();
 
                 if (user != null) {
-                    // System.out.println("user found!");
                     Console.clear();
                     return user;
                 }
@@ -71,7 +68,6 @@ public class Main {
         String password = input.nextLine();
 
         return DB.getUser(username, password);
-        // return username.equals("noah") && password.equals("123");
     }
 
     private static void loginMenu(String errorMessage) {

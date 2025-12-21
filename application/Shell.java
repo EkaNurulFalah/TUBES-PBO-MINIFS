@@ -1,6 +1,4 @@
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Scanner;
 
 public class Shell {
@@ -22,7 +20,6 @@ public class Shell {
 
     public ShellExit run() {
         System.out.println(LOGGED_IN_MESSAGE + "\n");
-
         boolean running = true;
 
         do {
@@ -99,11 +96,11 @@ public class Shell {
                     DB.createLog(line, user);
                     break;
                 case "echo":
-                    handleEcho(line); // 🔥 raw line
+                    handleEcho(line);
                     DB.createLog(line, user);
                     break;
                 case "rm":
-                    remove(rest); // 🔥 raw line
+                    remove(rest);
                     DB.createLog(line, user);
                     break;
                 case "logout":
@@ -194,7 +191,6 @@ public class Shell {
 
         Directory next = (Directory) node;
 
-        // 🔥 THIS is the missing piece
         if (next.getChildren().isEmpty()) {
             DB.loadChildren(next);
         }
@@ -255,7 +251,6 @@ public class Shell {
     }
 
     public void echo(String content, String target) {
-        // Ensure directory is loaded
         if (directory.getChildren().isEmpty()) {
             DB.loadChildren(directory);
         }
@@ -273,11 +268,7 @@ public class Shell {
         }
 
         File file = (File) node;
-
-        // 🔥 DB is source of truth
         DB.writeFile(file.getId(), content);
-
-        // update in-memory copy
         file.write(content);
     }
 
@@ -294,8 +285,6 @@ public class Shell {
         }
 
         File file = (File) node;
-
-        // 🔥 ALWAYS read fresh content
         String content = DB.readFileContent(file.getId());
         System.out.println(content);
     }
@@ -321,7 +310,6 @@ public class Shell {
             return;
         }
 
-        // ensure children loaded
         if (directory.getChildren().isEmpty()) {
             DB.loadChildren(directory);
         }
@@ -335,7 +323,6 @@ public class Shell {
             return;
         }
 
-        // directory handling
         if (node.isDirectory()) {
             Directory dir = (Directory) node;
 
@@ -346,11 +333,9 @@ public class Shell {
                 return;
             }
 
-            // optional safety: load children to check emptiness
             DB.loadChildren(dir);
         }
 
-        // 🔥 delete from DB first
         boolean deleted = DB.deleteNode(node.id, user.getId());
 
         if (!deleted) {
@@ -358,7 +343,6 @@ public class Shell {
             return;
         }
 
-        // remove from memory tree
         directory.removeChild(node);
     }
 
@@ -433,7 +417,6 @@ public class Shell {
                 }
 
                 if (DB.updateUsername(target.getId(), newName)) {
-                    // 🔥 if admin renamed THEMSELVES, update session object
                     if (target.getId() == user.getId()) {
                         user.setUsername(newName);
                     }
@@ -468,10 +451,8 @@ public class Shell {
                         "Password updated for user: " + username
                     );
 
-                    // optional: force logout if admin changes own password
                     if (target.getId() == user.getId()) {
                         System.out.println("Please log in again.");
-                        // return ShellExit.LOGOUT; (if you want this behavior)
                     }
                 } else {
                     System.out.println("Failed to update password");

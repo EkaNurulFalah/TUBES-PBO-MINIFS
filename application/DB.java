@@ -4,7 +4,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.List;
 
 public class DB {
 
@@ -77,7 +76,7 @@ public class DB {
             e.printStackTrace();
         }
 
-        return null; // no filesystem for this user
+        return null;
     }
 
     public static void loadChildren(Directory dir) {
