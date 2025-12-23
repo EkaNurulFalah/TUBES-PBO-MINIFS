@@ -125,7 +125,7 @@ public class Shell {
         return ShellExit.POWEROFF;
     }
 
-    public void help() {
+    private void help() {
         Directory root = DB.getRoot(user.getId());
         Node node = resolvePath(root, "~/system/manual.txt");
 
@@ -136,7 +136,7 @@ public class Shell {
         }
     }
 
-    public void history() {
+    private void history() {
         ArrayList<String> logs = DB.getLogs(user);
 
         for (String log : logs) {
@@ -144,7 +144,7 @@ public class Shell {
         }
     }
 
-    public Node resolvePath(Directory root, String path) {
+    private Node resolvePath(Directory root, String path) {
         String[] parts = path.replace("~", "").split("/");
         Directory current = root;
 
@@ -165,7 +165,7 @@ public class Shell {
         return current;
     }
 
-    public void list() {
+    private void list() {
         directory.listChildren();
     }
 
@@ -198,7 +198,7 @@ public class Shell {
         directory = next;
     }
 
-    public void makeDirectory(String name) {
+    private void makeDirectory(String name) {
         if (directory.getChildren().isEmpty()) {
             DB.loadChildren(directory);
         }
@@ -215,7 +215,7 @@ public class Shell {
         }
     }
 
-    public void makeFile(String name) {
+    private void makeFile(String name) {
         if (directory.getChildren().isEmpty()) {
             DB.loadChildren(directory);
         }
@@ -232,25 +232,7 @@ public class Shell {
         }
     }
 
-    private void handleEcho(String line) {
-        int redirect = line.indexOf('>');
-
-        if (redirect == -1) {
-            System.out.println("echo: missing redirection");
-            return;
-        }
-
-        String content = line.substring(5, redirect).trim();
-        String target = line.substring(redirect + 1).trim();
-
-        if (content.startsWith("\"") && content.endsWith("\"")) {
-            content = content.substring(1, content.length() - 1);
-        }
-
-        echo(content, target);
-    }
-
-    public void echo(String content, String target) {
+    private void echo(String content, String target) {
         if (directory.getChildren().isEmpty()) {
             DB.loadChildren(directory);
         }
@@ -272,7 +254,7 @@ public class Shell {
         file.write(content);
     }
 
-    public void readFile(String target) {
+    private void readFile(String target) {
         if (directory.getChildren().isEmpty()) {
             DB.loadChildren(directory);
         }
@@ -287,6 +269,24 @@ public class Shell {
         File file = (File) node;
         String content = DB.readFileContent(file.getId());
         System.out.println(content);
+    }
+
+    private void handleEcho(String line) {
+        int redirect = line.indexOf('>');
+
+        if (redirect == -1) {
+            System.out.println("echo: missing redirection");
+            return;
+        }
+
+        String content = line.substring(5, redirect).trim();
+        String target = line.substring(redirect + 1).trim();
+
+        if (content.startsWith("\"") && content.endsWith("\"")) {
+            content = content.substring(1, content.length() - 1);
+        }
+
+        echo(content, target);
     }
 
     private void remove(String rest) {
