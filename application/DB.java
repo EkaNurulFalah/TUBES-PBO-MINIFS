@@ -571,10 +571,5 @@ public class DB {
         createNode("personal", "directory", null, userId, workspaceId);
         createNode("work", "directory", null, userId, workspaceId);
         createNode("notes", "directory", null, userId, workspaceId);
-
-        // logs
-        int logsId = createNode("logs", "directory", null, userId, rootId);
-
-        createNode("logs.txt", "file", "", userId, logsId);
     }
 }
