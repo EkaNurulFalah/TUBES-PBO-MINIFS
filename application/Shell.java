@@ -65,7 +65,7 @@ public class Shell {
                     break;
                 case "cd":
                     if (rest.isEmpty()) {
-                        directory = root;
+                        changeDirectory();
                     } else {
                         changeDirectory(rest);
                     }
@@ -96,7 +96,7 @@ public class Shell {
                     DB.createLog(line, user);
                     break;
                 case "echo":
-                    handleEcho(line);
+                    echo(line);
                     DB.createLog(line, user);
                     break;
                 case "rm":
@@ -169,6 +169,10 @@ public class Shell {
         directory.listChildren();
     }
 
+    private void changeDirectory() {
+        directory = root;
+    }
+
     private void changeDirectory(String target) {
         if (target.equals("..")) {
             if (directory.getParent() != null) {
@@ -232,6 +236,24 @@ public class Shell {
         }
     }
 
+    private void echo(String line) {
+        int redirect = line.indexOf('>');
+
+        if (redirect == -1) {
+            System.out.println("echo: missing redirection");
+            return;
+        }
+
+        String content = line.substring(5, redirect).trim();
+        String target = line.substring(redirect + 1).trim();
+
+        if (content.startsWith("\"") && content.endsWith("\"")) {
+            content = content.substring(1, content.length() - 1);
+        }
+
+        echo(content, target);
+    }
+
     private void echo(String content, String target) {
         if (directory.getChildren().isEmpty()) {
             DB.loadChildren(directory);
@@ -269,24 +291,6 @@ public class Shell {
         File file = (File) node;
         String content = DB.readFileContent(file.getId());
         System.out.println(content);
-    }
-
-    private void handleEcho(String line) {
-        int redirect = line.indexOf('>');
-
-        if (redirect == -1) {
-            System.out.println("echo: missing redirection");
-            return;
-        }
-
-        String content = line.substring(5, redirect).trim();
-        String target = line.substring(redirect + 1).trim();
-
-        if (content.startsWith("\"") && content.endsWith("\"")) {
-            content = content.substring(1, content.length() - 1);
-        }
-
-        echo(content, target);
     }
 
     private void remove(String rest) {
@@ -352,155 +356,171 @@ public class Shell {
             return;
         }
 
-        String[] parts = rest.split(" ");
-
+        String[] parts = tokenize(rest);
         if (parts.length == 0) {
             System.out.println("user: missing command");
             return;
         }
 
         switch (parts[0]) {
-            case "add": {
-                if (parts.length < 3) {
-                    System.out.println(
-                        "Usage: user add <username> <password> [role]"
-                    );
-                    return;
-                }
-
-                String username = parts[1];
-                String password = parts[2];
-                String role = (parts.length >= 4) ? parts[3] : "user";
-
-                if (!role.equals("user") && !role.equals("admin")) {
-                    System.out.println("Invalid role: " + role);
-                    return;
-                }
-
-                if (DB.userExists(username)) {
-                    System.out.println("User already exists");
-                    return;
-                }
-
-                if (DB.createUser(username, password, role)) {
-                    User newUser = DB.getUserByUsername(username);
-
-                    if (newUser != null) {
-                        DB.createInitialFileSystem(newUser.getId());
-                    }
-
-                    System.out.println("User created: " + username);
-                }
-
+            case "add":
+                addUser(parts);
                 break;
-            }
-            case "setname": {
-                if (parts.length < 3) {
-                    System.out.println(
-                        "Usage: user setname <oldUsername> <newUsername>"
-                    );
-                    return;
-                }
-
-                String oldName = parts[1];
-                String newName = parts[2];
-
-                User target = DB.getUserByUsername(oldName);
-                if (target == null) {
-                    System.out.println("User not found");
-                    return;
-                }
-
-                if (DB.userExists(newName)) {
-                    System.out.println("Username already exists");
-                    return;
-                }
-
-                if (DB.updateUsername(target.getId(), newName)) {
-                    if (target.getId() == user.getId()) {
-                        user.setUsername(newName);
-                    }
-
-                    System.out.println(
-                        "Username updated: " + oldName + " → " + newName
-                    );
-                } else {
-                    System.out.println("Failed to update username");
-                }
+            case "setname":
+                renameUser(parts);
                 break;
-            }
-            case "setpass": {
-                if (parts.length < 3) {
-                    System.out.println(
-                        "Usage: user setpass <username> <newPassword>"
-                    );
-                    return;
-                }
-
-                String username = parts[1];
-                String newPass = parts[2];
-
-                User target = DB.getUserByUsername(username);
-                if (target == null) {
-                    System.out.println("User not found");
-                    return;
-                }
-
-                if (DB.updatePassword(target.getId(), newPass)) {
-                    System.out.println(
-                        "Password updated for user: " + username
-                    );
-
-                    if (target.getId() == user.getId()) {
-                        System.out.println("Please log in again.");
-                    }
-                } else {
-                    System.out.println("Failed to update password");
-                }
+            case "setpass":
+                changePassword(parts);
                 break;
-            }
-            case "list": {
-                ArrayList<User> users = DB.getAllUsers();
-
-                System.out.println("ID   USERNAME   ROLE");
-                for (User u : users) {
-                    System.out.printf(
-                        "%-4d %-10s %s%n",
-                        u.getId(),
-                        u.getUsername(),
-                        u.getRole()
-                    );
-                }
+            case "list":
+                listUsers();
                 break;
-            }
-            case "del": {
-                if (parts.length < 2) {
-                    System.out.println("Usage: user del <username>");
-                    return;
-                }
-
-                String username = parts[1];
-
-                User target = DB.getUserByUsername(username);
-                if (target == null) {
-                    System.out.println("User not found");
-                    return;
-                }
-
-                if (target.getId() == user.getId()) {
-                    System.out.println("Cannot delete yourself");
-                    return;
-                }
-
-                if (DB.deleteUser(target.getId())) {
-                    System.out.println("User deleted: " + username);
-                } else {
-                    System.out.println("Failed to delete user");
-                }
+            case "del":
+                deleteUser(parts);
                 break;
-            }
             default:
                 System.out.println("Unknown user command");
+                break;
         }
+    }
+
+    private String[] tokenize(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return new String[0];
+        }
+        return input.trim().split("\\s+");
+    }
+
+    private void addUser(String[] parts) {
+        if (parts.length < 3) {
+            System.out.println("Usage: user add <username> <password> [role]");
+            return;
+        }
+
+        String username = parts[1];
+        String password = parts[2];
+        String role = parts.length >= 4 ? parts[3] : "user";
+
+        if (!role.equals("user") && !role.equals("admin")) {
+            System.out.println("Invalid role: " + role);
+            return;
+        }
+
+        if (DB.userExists(username)) {
+            System.out.println("User already exists");
+            return;
+        }
+
+        if (!DB.createUser(username, password, role)) {
+            System.out.println("Failed to create user");
+            return;
+        }
+
+        User newUser = DB.getUserByUsername(username);
+        if (newUser != null) {
+            DB.createInitialFileSystem(newUser.getId());
+        }
+
+        System.out.println("User created: " + username);
+    }
+
+    private void renameUser(String[] parts) {
+        if (parts.length < 3) {
+            System.out.println(
+                "Usage: user setname <oldUsername> <newUsername>"
+            );
+            return;
+        }
+
+        String oldName = parts[1];
+        String newName = parts[2];
+
+        User target = DB.getUserByUsername(oldName);
+        if (target == null) {
+            System.out.println("User not found");
+            return;
+        }
+
+        if (DB.userExists(newName)) {
+            System.out.println("Username already exists");
+            return;
+        }
+
+        if (!DB.updateUsername(target.getId(), newName)) {
+            System.out.println("Failed to update username");
+            return;
+        }
+
+        if (target.getId() == user.getId()) {
+            user.setUsername(newName);
+        }
+
+        System.out.println("Username updated: " + oldName + " → " + newName);
+    }
+
+    private void changePassword(String[] parts) {
+        if (parts.length < 3) {
+            System.out.println("Usage: user setpass <username> <newPassword>");
+            return;
+        }
+
+        String username = parts[1];
+        String newPass = parts[2];
+
+        User target = DB.getUserByUsername(username);
+        if (target == null) {
+            System.out.println("User not found");
+            return;
+        }
+
+        if (!DB.updatePassword(target.getId(), newPass)) {
+            System.out.println("Failed to update password");
+            return;
+        }
+
+        System.out.println("Password updated for user: " + username);
+
+        if (target.getId() == user.getId()) {
+            System.out.println("Please log in again.");
+        }
+    }
+
+    private void listUsers() {
+        System.out.println("ID   USERNAME   ROLE");
+        for (User u : DB.getAllUsers()) {
+            System.out.printf(
+                "%-4d %-10s %s%n",
+                u.getId(),
+                u.getUsername(),
+                u.getRole()
+            );
+        }
+    }
+
+    private void deleteUser(String[] parts) {
+        if (parts.length < 2) {
+            System.out.println("Usage: user del <username>");
+            return;
+        }
+
+        String username = parts[1];
+
+        User target = DB.getUserByUsername(username);
+        if (target == null) {
+            System.out.println("User not found");
+            return;
+        }
+
+        if (target.getId() == user.getId()) {
+            System.out.println("Cannot delete yourself");
+            return;
+        }
+
+        if (!DB.deleteUser(target.getId())) {
+            System.out.println("Failed to delete user");
+            return;
+        }
+
+        System.out.println("User deleted: " + username);
     }
 }
