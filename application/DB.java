@@ -11,6 +11,8 @@ public class DB {
     private static final String USER = "root";
     private static final String PASSWORD = "";
 
+    private DB() {}
+
     public static User getUser(String username, String password) {
         String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
 
